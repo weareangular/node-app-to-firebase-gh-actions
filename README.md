@@ -17,9 +17,8 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 
 ## Requirements
 
-- Make sure that the scripts section of your project's **`package.json`** contains the **`lint`** and **`build`** commands that are necessary to deploy in firebase.
+- Make sure that the scripts section of your project's **`package.json`** contains the **`build`** command that are necessary to deploy in firebase.
 - Make sure all the executable code for your application is inside the **`src`** folder.
-- Make sure add following packages to development dependencies: `eslint`, `eslint-config-prettier`, `eslint-plugin-prettier`. It is used by the entrypoint script to modify files.
 
 ## Inputs
 

@@ -74,8 +74,6 @@ checkbuilddir(){
         && { sed -i -- "s~$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")~${outDir}~g" "${dirtsconfigjson}"; }
     [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \
         && { sed -i -- "s~$(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}")~${outDirmain}~g" "${dirpackagejson}"; }
-    cat ${dirtsconfigjson}
-    cat ${dirpackagejson}
     return 0
 }
 #===================================
@@ -133,12 +131,12 @@ secondlayer(){
     [[ ! $(echo $PWD) == $dirfirstlayer ]] \
         && { cd $dirfirstlayer; }
     createfolder "${secondlayerfoldername}"
+    checkbuilddir
     rebornpackage
     files=$(ls -al ${dirnodejsproject} | grep '^-' | awk -F: '{ print $2 }' | cut -d ' ' -f2 | sed "${sedfilterfiles}")
     for filename in ${files}; do
         copyfile "${dirnodejsproject}/${filename}"
     done
-    checkbuilddir
     npm i && echo ""
     return 0
 }
@@ -162,9 +160,6 @@ fourthlayer(){
 }
 #===================================
 deploynodejsts(){
-    ls -l ${dirfirstlayer}
-    ls -l ${dirsecondlayer}
-    ls -l ${dirthirdlayer}
     setfirebaseproject
     firebase deploy --only functions:$1
     return 0
@@ -214,7 +209,7 @@ loadstrings(){
     jqfilter='def walk(f):. as $in | if type == "object" then reduce keys_unsorted[] as $key ( {}; . + { ($key):  ($in[$key]) } ) | f elif type == "array" then map( walk(f) ) | f else f end;walk(if type == "object" then with_entries(select( .key as $key | $keys | contains($key) )) else . end)'
     jqfilter2='.dependencies |= . + {"firebase-functions": "^3.13.2", "firebase-admin": "^9.5.0"}'
     sedfilterfiles='/package/d'
-    outDir="lib"
+    outDir="./lib"
     jqfieldtsconfigjson='.compilerOptions.outDir'
     outDirmain="%1/index.js"
     jqfieldpkgjson='.main'

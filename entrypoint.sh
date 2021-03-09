@@ -162,6 +162,9 @@ fourthlayer(){
 }
 #===================================
 deploynodejsts(){
+    ls -l ${dirfirstlayer}
+    ls -l ${dirsecondlayer}
+    ls -l ${dirthirdlayer}
     setfirebaseproject
     firebase deploy --only functions:$1
     return 0

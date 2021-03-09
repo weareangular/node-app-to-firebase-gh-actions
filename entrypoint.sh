@@ -9,10 +9,10 @@ help() {
   cat << EOF
 usage: $0 [OPTIONS]
     --h                                                                       Show this message 
-    --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [PROJECT_ID]  deploy Typescript Node.js app on firebase as function
+    --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [PROJECT_ID] [REGION] [MEMORY] [TIMEOUT]  deploy Typescript Node.js app on firebase as function
                                                                                 [DEFAULT_APP_NAME] => variable name express, 'app' by default.
-                                                                                [DEFAULT_APP_FILENAME] => name of the file that contains the express variable, 'app.ts' by default (If you want to define this variable, you must define the DEFAULT_APP_NAME variable).
-                                                                                [PROJECT_NAME] => name of the function to be displayed (If you want to define this variable, you must define the DEFAULT_APP_NAME and DEFAULT_APP_FILENAME variable).
+                                                                                [DEFAULT_APP_FILENAME] => name of the file that contains the express variable, 'app.ts' by default (if you want to define this variable you must define the previous ones).
+                                                                                [PROJECT_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).
 EOF
 }
 #===================================
@@ -23,6 +23,12 @@ checkenvvariables(){
         && { echo -e "\nEither FIREBASE_TOKEN is required to run commands with the firebase cli"; exit 126; }
     [[ -z $PROJECT_ID ]] \
         && { echo -e "\nEither PROJECT_ID is required"; exit 126; }
+    [[ -z $REGION ]] \
+        && { REGION="us-central1"; }
+    [[ -z $MEMORY ]] \
+        && { MEMORY="128MB"; }
+    [[ -z $TIMEOUT ]] \
+        && { TIMEOUT="300"; }
     return 0
 }
 #===================================
@@ -223,7 +229,11 @@ loadstrings(){
 import * as functions from 'firebase-functions';
 import %1 from './app/%2';
 
-export const %3 = functions.https.onRequest(%1);
+export const %3 = functions
+                    .region('%4')
+                    .runWith({ memory: '%5', timeoutSeconds: %6 })
+                    .https
+                    .onRequest(%1);
 EOF
 )
 
@@ -257,6 +267,9 @@ changestrings(){
     dirthirdlayer=${dirthirdlayer//%2/$thirdlayerfoldername}
     fileindextscontent=${fileindextscontent//%1/$appname}
     fileindextscontent=${fileindextscontent//%2/$(echo $appfilename | cut -d '.' -f1)}
+    fileindextscontent=${fileindextscontent//%4/$REGION}
+    fileindextscontent=${fileindextscontent//%5/$MEMORY}
+    fileindextscontent=${fileindextscontent//%6/$TIMEOUT}
 
     #==========fourthlayer===============
     sedfilterport="${sedfilterport//%1/$appname}"

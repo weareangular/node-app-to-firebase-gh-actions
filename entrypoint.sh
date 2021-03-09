@@ -129,13 +129,19 @@ firstlayer(){
 secondlayer(){
     [[ ! $(echo $PWD) == $dirfirstlayer ]] \
         && { cd $dirfirstlayer; }
+    echo "2-1"
     createfolder "${secondlayerfoldername}"
+    echo "2-2"
     rebornpackage
+    echo "2-3"
     files=$(ls -al ${dirnodejsproject} | grep '^-' | awk -F: '{ print $2 }' | cut -d ' ' -f2 | sed "${sedfilterfiles}")
+    echo "2-4"
     for filename in ${files}; do
         copyfile "${dirnodejsproject}/${filename}"
     done
+    echo "2-5"
     checkbuilddir
+    echo "2-6"
     npm i && echo ""
     return 0
 }

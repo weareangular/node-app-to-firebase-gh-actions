@@ -139,7 +139,6 @@ secondlayer(){
         copyfile "${dirnodejsproject}/${filename}"
     done
     checkbuilddir
-    npm i && echo ""
     return 0
 }
 #===================================
@@ -163,6 +162,7 @@ fourthlayer(){
 #===================================
 deploynodejsts(){
     setfirebaseproject
+    npm install
     firebase deploy --only functions:$1
     return 0
 }

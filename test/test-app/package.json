@@ -2,12 +2,12 @@
   "name": "hello-typescript",
   "version": "1.0.0",
   "description": "",
-  "main": "lib/index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "lint": "eslint './src/**/*'",
     "build": "tsc",
     "start": "npm run serve",
-    "serve": "node lib/index.js",
+    "serve": "node ./lib/index.js",
     "test": "echo \"No test specified\""
   },
   "author": "",

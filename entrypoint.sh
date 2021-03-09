@@ -70,10 +70,13 @@ copyfile(){
 #======DEPLOYNODEJSTYPESCRIPT=======
 #===================================
 checkbuilddir(){
+    echo "2-5-1"
     [[ ! $(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}") == "${outDir}" ]] \
         && { sed -i -- "s/$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")/${outDir}/g" "${dirtsconfigjson}"; }
+    echo "2-5-2"
     [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \
         && { sed -i -- "s~$(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}")~${outDirmain}~g" "${dirpackagejson}"; }
+    echo "2-5-3"
     return 0
 }
 #===================================

@@ -9,7 +9,7 @@ help() {
   cat << EOF
 usage: $0 [OPTIONS]
     --h                                                                       Show this message 
-    --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [PROJECT_ID] [REGION] [MEMORY] [TIMEOUT]  deploy Typescript Node.js app on firebase as function
+    --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [PROJECT_ID]  deploy Typescript Node.js app on firebase as function
                                                                                 [DEFAULT_APP_NAME] => variable name express, 'app' by default.
                                                                                 [DEFAULT_APP_FILENAME] => name of the file that contains the express variable, 'app.ts' by default (if you want to define this variable you must define the previous ones).
                                                                                 [PROJECT_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).

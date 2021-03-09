@@ -139,6 +139,7 @@ secondlayer(){
         copyfile "${dirnodejsproject}/${filename}"
     done
     checkbuilddir
+    npm i && echo ""
     return 0
 }
 #===================================
@@ -162,7 +163,6 @@ fourthlayer(){
 #===================================
 deploynodejsts(){
     setfirebaseproject
-    npm install
     firebase deploy --only functions:$1
     return 0
 }
@@ -211,7 +211,7 @@ loadstrings(){
     jqfilter='def walk(f):. as $in | if type == "object" then reduce keys_unsorted[] as $key ( {}; . + { ($key):  ($in[$key]) } ) | f elif type == "array" then map( walk(f) ) | f else f end;walk(if type == "object" then with_entries(select( .key as $key | $keys | contains($key) )) else . end)'
     jqfilter2='.dependencies |= . + {"firebase-functions": "^3.13.2", "firebase-admin": "^9.5.0"}'
     sedfilterfiles='/package/d'
-    outDir="./dist"
+    outDir="./lib"
     jqfieldtsconfigjson='.compilerOptions.outDir'
     outDirmain="%1/index.js"
     jqfieldpkgjson='.main'

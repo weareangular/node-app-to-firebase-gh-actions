@@ -70,13 +70,10 @@ copyfile(){
 #======DEPLOYNODEJSTYPESCRIPT=======
 #===================================
 checkbuilddir(){
-    echo "2-5-1"
     [[ ! $(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}") == "${outDir}" ]] \
-        && { echo $(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}"); echo "${outDir}"; sed -i -- "s~$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")~${outDir}~g" "${dirtsconfigjson}"; }
-    echo "2-5-2"
+        && { sed -i -- "s~$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")~${outDir}~g" "${dirtsconfigjson}"; }
     [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \
         && { sed -i -- "s~$(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}")~${outDirmain}~g" "${dirpackagejson}"; }
-    echo "2-5-3"
     return 0
 }
 #===================================
@@ -132,19 +129,13 @@ firstlayer(){
 secondlayer(){
     [[ ! $(echo $PWD) == $dirfirstlayer ]] \
         && { cd $dirfirstlayer; }
-    echo "2-1"
     createfolder "${secondlayerfoldername}"
-    echo "2-2"
     rebornpackage
-    echo "2-3"
     files=$(ls -al ${dirnodejsproject} | grep '^-' | awk -F: '{ print $2 }' | cut -d ' ' -f2 | sed "${sedfilterfiles}")
-    echo "2-4"
     for filename in ${files}; do
         copyfile "${dirnodejsproject}/${filename}"
     done
-    echo "2-5"
     checkbuilddir
-    echo "2-6"
     npm i && echo ""
     return 0
 }
@@ -152,11 +143,17 @@ secondlayer(){
 thirdlayer(){
     [[ ! $(echo $PWD) == $dirsecondlayer ]] \
         && { cd $dirsecondlayer; }
+    echo "3-1"
     createfolder "${thirdlayerfoldername}"
+    echo "3-2"
     getprojectname
+    echo "3-3"
     createfile "${filenameindexts}" "${fileindextscontent//%3/$projectname}"
+    echo "3-4"
     ../node_modules/eslint/bin/eslint.js "${filenameindexts}" --fix
+    echo "3-5"
     copyfolderelements "${dirsrcnodejsproject}" "${dirthirdlayer}"
+    echo "3-6"
     return 0
 }
 #===================================

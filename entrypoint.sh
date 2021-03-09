@@ -85,8 +85,9 @@ rebornpackage(){
 }
 #===================================
 deletelistenport(){
-    sed -i "${sedfilterport}" ${dirdefaultexportfile}
-    ../../node_modules/eslint/bin/eslint.js "${dirdefaultexportfile}" --fix
+    sed -i "${sedfilterport2}" ${dirdefaultexportfile}
+    sed -zi "${sedfilterport}" ${dirdefaultexportfile}
+    return 0
 }
 #===================================
 checkexportapp(){
@@ -143,17 +144,10 @@ secondlayer(){
 thirdlayer(){
     [[ ! $(echo $PWD) == $dirsecondlayer ]] \
         && { cd $dirsecondlayer; }
-    echo "3-1"
     createfolder "${thirdlayerfoldername}"
-    echo "3-2"
     getprojectname
-    echo "3-3"
     createfile "${filenameindexts}" "${fileindextscontent//%3/$projectname}"
-    echo "3-4"
-    ../node_modules/eslint/bin/eslint.js "${filenameindexts}" --fix
-    echo "3-5"
     copyfolderelements "${dirsrcnodejsproject}" "${dirthirdlayer}"
-    echo "3-6"
     return 0
 }
 #===================================
@@ -203,7 +197,7 @@ loadstrings(){
     firstlayerfoldername="functions"
     dirfirstlayer="%1/%2"
     filenamefirebasejson="firebase.json"
-    firebasejsoncontent='{"functions":{"predeploy":["npm --prefix \\"$RESOURCE_DIR\\" run lint","npm --prefix \\"$RESOURCE_DIR\\" run build"],"source":"functions","runtime":"nodejs12"}}'
+    firebasejsoncontent='{"functions":{"predeploy":["npm --prefix \\"$RESOURCE_DIR\\" run build"],"source":"functions","runtime":"nodejs12"}}'
     filenamefirebaserc=".firebaserc"
     firebaserccontent='{"projects":{"default":"somos-aurora"}}'
 
@@ -234,7 +228,8 @@ EOF
 )
 
     #==========fourthlayer===============
-    sedfilterport='/%1.listen/d; /env.PORT/d;'
+    sedfilterport='s/%1.listen(.*);//g'
+    sedfilterport2='/env.PORT/d;'
     defaultexportstring="export default %1;"
 
     return 0

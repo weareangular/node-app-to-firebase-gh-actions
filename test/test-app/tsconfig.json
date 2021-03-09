@@ -6,15 +6,15 @@
         "noImplicitAny": true,
         "moduleResolution": "node",
         "sourceMap": true,
-        "outDir": "./lib",
+        "outDir": "./dir",
         "baseUrl": ".",
-	"skipLibCheck": true,
         "paths": {
             "*": [
+                "node_modules/*",
                 "src/types/*"
             ]
         },
-        "./lib": [
+        "lib": [
             "es2015"
         ]
     },

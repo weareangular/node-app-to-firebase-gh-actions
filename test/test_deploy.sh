@@ -17,7 +17,7 @@ buildockerdimage(){
 #===================================
 rundockerimage(){
     tput setaf 6
-    echo -e "\nTESTING DOCKER IMAGE WITH '--deploy-function-nodejs-ts' FLAG"
+    echo -e "\nTESTING DOCKER IMAGE WITH '--deploy-function' FLAG"
     tput sgr0
     DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
     [[ -n $( docker images | grep wrap-firebase ) ]] \

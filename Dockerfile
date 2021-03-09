@@ -1,7 +1,7 @@
 FROM node:15.8.0-alpine3.10
 
 # Update distro
-RUN apk update && apk upgrade && apk add bash jq
+RUN apk update && apk upgrade && apk add bash sed jq
 
 # Set the timezone in docker
 RUN apk --update add tzdata && cp /usr/share/zoneinfo/America/Bogota /etc/localtime && echo "America/Bogota" > /etc/timezone && apk del tzdata

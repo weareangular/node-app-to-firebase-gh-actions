@@ -32,6 +32,9 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 
 - `FIREBASE_TOKEN` - **Required**. The token to use for authentication.
 - `PROJECT_ID` - **Required**. Name of the firebase project where the function should be deployed.
+- `REGION` - Optional. firebase region to deploy function, `us-central1` by default.
+- `MEMORY` - Optional. Runtime options, memory allocation for function, `128MB` by default.
+- `TIMEOUT` - Optional. Runtime options, timeout in seconds for function, `300` by default.
 
 ## Examples
 
@@ -71,4 +74,7 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          REGION: ${{ secrets.REGION }}
+          MEMORY: ${{ secrets.MEMORY }}
+          TIMEOUT: ${{ secrets.TIMEOUT }}
 ```

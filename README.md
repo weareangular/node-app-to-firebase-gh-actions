@@ -74,4 +74,7 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          REGION: ${{ secrets.REGION }}
+          MEMORY: ${{ secrets.MEMORY }}
+          TIMEOUT: ${{ secrets.TIMEOUT }}
 ```

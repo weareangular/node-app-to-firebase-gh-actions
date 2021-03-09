@@ -74,6 +74,8 @@ checkbuilddir(){
         && { sed -i -- "s~$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")~${outDir}~g" "${dirtsconfigjson}"; }
     [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \
         && { sed -i -- "s~$(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}")~${outDirmain}~g" "${dirpackagejson}"; }
+    cat ${dirtsconfigjson}
+    cat ${dirpackagejson}
     return 0
 }
 #===================================

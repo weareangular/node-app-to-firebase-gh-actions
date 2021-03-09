@@ -72,6 +72,8 @@ copyfile(){
 checkbuilddir(){
     echo "2-5-1"
     [[ ! $(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}") == "${outDir}" ]] \
+        echo "$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")"
+        echo "${outDir}"
         && { sed -i -- "s/$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")/${outDir}/g" "${dirtsconfigjson}"; }
     echo "2-5-2"
     [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \

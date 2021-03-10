@@ -23,7 +23,7 @@ checkenvvariables(){
         && { echo -e "\nEither FIREBASE_TOKEN is required to run commands with the firebase cli"; exit 126; }
     [[ -z $PROJECT_ID ]] \
         && { echo -e "\nEither PROJECT_ID is required"; exit 126; }
-    [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.node') ]] \
+    [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.runtime') ]] \
         && { RUNTIME="nodejs12"; } \
         || { RUNTIME="$(echo $RUNTIME_OPTIONS | jq -r '.runtime')"; }
     [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.region') ]] \

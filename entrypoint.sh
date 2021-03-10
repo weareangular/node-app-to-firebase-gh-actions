@@ -23,12 +23,18 @@ checkenvvariables(){
         && { echo -e "\nEither FIREBASE_TOKEN is required to run commands with the firebase cli"; exit 126; }
     [[ -z $PROJECT_ID ]] \
         && { echo -e "\nEither PROJECT_ID is required"; exit 126; }
-    [[ -z $REGION ]] \
-        && { REGION="us-central1"; }
-    [[ -z $MEMORY ]] \
-        && { MEMORY="128MB"; }
-    [[ -z $TIMEOUT ]] \
-        && { TIMEOUT="300"; }
+    [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.node') ]] \
+        && { RUNTIME="nodejs12"; } \
+        || { RUNTIME="$(echo $RUNTIME_OPTIONS | jq -r '.node')"; }
+    [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.region') ]] \
+        && { REGION="us-central1"; } \
+        || { REGION="$(echo $RUNTIME_OPTIONS | jq -r '.region')"; }
+    [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.memory') ]] \
+        && { MEMORY="128MB"; } \
+        || { MEMORY="$(echo $RUNTIME_OPTIONS | jq -r '.memory')"; }
+    [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.timeoutSeconds') ]] \
+        && { TIMEOUT="300"; } \
+        || { TIMEOUT="$(echo $RUNTIME_OPTIONS | jq -r '.timeoutSeconds')"; }
     return 0
 }
 #===================================
@@ -115,6 +121,12 @@ setfirebaseproject(){
     return 0
 }
 #===================================
+setenvfirebasefunction(){
+    [[ -n $(echo $FUNCTION_ENV) ]] \
+        && { firebase functions:config:set env="${FUNCTION_ENV}" ; }
+    return 0
+}
+#===================================
 projectlayer(){
     [[ ! -d $dirproject ]] \
         && { createfolder "${dirproject}"; }
@@ -167,6 +179,7 @@ fourthlayer(){
 #===================================
 deploynodejsts(){
     setfirebaseproject
+    setenvfirebasefunction
     firebase deploy --only functions:$1
     return 0
 }
@@ -203,7 +216,7 @@ loadstrings(){
     firstlayerfoldername="functions"
     dirfirstlayer="%1/%2"
     filenamefirebasejson="firebase.json"
-    firebasejsoncontent='{"functions":{"predeploy":["npm --prefix \\"$RESOURCE_DIR\\" run build"],"source":"functions","runtime":"nodejs12"}}'
+    firebasejsoncontent='{"functions":{"predeploy":["npm --prefix \\"$RESOURCE_DIR\\" run build"],"source":"functions","runtime":"%1"}}'
     filenamefirebaserc=".firebaserc"
     firebaserccontent='{"projects":{"default":"somos-aurora"}}'
 
@@ -254,6 +267,7 @@ changestrings(){
     #===========firstlayer===============
     dirfirstlayer=${dirfirstlayer//%1/$dirproject}
     dirfirstlayer=${dirfirstlayer//%2/$firstlayerfoldername}
+    firebasejsoncontent=${firebasejsoncontent//%1/$RUNTIME}
 
     #==========secondlayer===============
     dirsecondlayer=${dirsecondlayer//%1/$dirfirstlayer}

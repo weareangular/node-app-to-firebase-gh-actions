@@ -32,9 +32,8 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 
 - `FIREBASE_TOKEN` - **Required**. The token to use for authentication.
 - `PROJECT_ID` - **Required**. Name of the firebase project where the function should be deployed.
-- `REGION` - Optional. firebase region to deploy function, `us-central1` by default.
-- `MEMORY` - Optional. Runtime options, memory allocation for function, `128MB` by default.
-- `TIMEOUT` - Optional. Runtime options, timeout in seconds for function, `300` by default.
+- `RUNTIME_OPTIONS` - Optional. firebase runtime options, see [set runtime options](https://firebase.google.com/docs/functions/manage-functions#set_runtime_options) and [RUNTIME_OPTIONS](#example-runtime_options-default-options) for example.
+- `FUNCTION_ENV` - Optional. environment variables of the function, see [FUNCTION_ENV](#example-function_env) for example.
 
 ## Examples
 
@@ -49,6 +48,29 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 ├── src
 │   └── server.ts
 └── tsconfig.json
+```
+
+### Example RUNTIME_OPTIONS (Default options)
+
+```json
+{
+  "runtime": "nodejs12",
+  "region": "us-central1",
+  "memory": "256MB",
+  "timeoutSeconds": 300
+}
+```
+
+### Example FUNCTION_ENV
+
+```json
+{
+  "config": {
+    "host": "domain",
+    "key": "SECRET_KEY",
+    "pass": "SECRET_PASS"
+  }
+}
 ```
 
 ### Example of the .yaml file
@@ -74,7 +96,6 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          REGION: ${{ secrets.REGION }}
-          MEMORY: ${{ secrets.MEMORY }}
-          TIMEOUT: ${{ secrets.TIMEOUT }}
+          RUNTIME_OPTIONS: ${{ secrets.RUNTIME_OPTIONS }}
+          FUNCTION_ENV: ${{ secrets.FUNCTION_ENV }}
 ```

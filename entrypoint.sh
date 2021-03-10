@@ -35,10 +35,6 @@ checkenvvariables(){
     [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.timeoutSeconds') ]] \
         && { TIMEOUT="300"; } \
         || { TIMEOUT="$(echo $RUNTIME_OPTIONS | jq -r '.timeoutSeconds')"; }
-    echo "$RUNTIME"
-    echo "$REGION"
-    echo "$MEMORY"
-    echo "$TIMEOUT"
     return 0
 }
 #===================================

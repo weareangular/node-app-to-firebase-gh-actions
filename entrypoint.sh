@@ -25,7 +25,7 @@ checkenvvariables(){
         && { echo -e "\nEither PROJECT_ID is required"; exit 126; }
     [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.node') ]] \
         && { RUNTIME="nodejs12"; } \
-        || { RUNTIME="$(echo $RUNTIME_OPTIONS | jq -r '.node')"; }
+        || { RUNTIME="$(echo $RUNTIME_OPTIONS | jq -r '.runtime')"; }
     [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.region') ]] \
         && { REGION="us-central1"; } \
         || { REGION="$(echo $RUNTIME_OPTIONS | jq -r '.region')"; }
@@ -35,6 +35,10 @@ checkenvvariables(){
     [[ -z $(echo $RUNTIME_OPTIONS | jq -r '.timeoutSeconds') ]] \
         && { TIMEOUT="300"; } \
         || { TIMEOUT="$(echo $RUNTIME_OPTIONS | jq -r '.timeoutSeconds')"; }
+    echo "$RUNTIME"
+    echo "$REGION"
+    echo "$MEMORY"
+    echo "$TIMEOUT"
     return 0
 }
 #===================================

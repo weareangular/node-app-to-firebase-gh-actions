@@ -1,6 +1,6 @@
 # GitHub Actions for Firebase
 
-This Action for [firebae](https://firebase.google.com/) transform `Typescript Node.js` projects into `Firebase functions` to be deployed.
+This Action for [firebase](https://firebase.google.com/) allows you to perform two actions, the first one transforms the projects from `Typescript Node.js` into` Firebase Functions` to be implemented and deployed, the second one deploys `Next.js` applications to `Firebase Functions and Hosting`.
 
 <div align="center">
 <img src="https://github.githubassets.com/images/modules/site/features/actions-icon-actions.svg" height="80"></img>
@@ -17,8 +17,14 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 
 ## Requirements
 
+### Deploy as a Function
+
 - Make sure that the scripts section of your project's **`package.json`** contains the **`build`** command that are necessary to deploy in firebase.
 - Make sure all the executable code for your application is inside the **`src`** folder.
+
+### Deploy Next.js project
+
+- Make sure that the scripts section of your project's **`package.json`** contains the **`build`** command that are necessary to deploy in firebase.
 
 ## Inputs
 
@@ -27,6 +33,9 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
   - `[DEFAULT_APP_NAME]` - variable name express, `app` by default.
   - `[DEFAULT_APP_FILENAME]` - name of the file that contains the express variable, `app.ts` by default (If you want to define this variable, you must define the `DEFAULT_APP_NAME` variable).
   - `[PROJECT_NAME]` - name of the function to be displayed (If you want to define this variable, you must define the `DEFAULT_APP_NAME` and `DEFAULT_APP_FILENAME` variables).
+- `--deploy-ssr [SITE_ID] [FUNCTION_NAME]` - Deploy Nextjs app on firebase.
+  - `[SITE_ID]` - is used to construct the Firebase-provisioned default subdomains for the site (if it does not exist, it is created).
+  - `[FUNCTION_NAME]` - name of the function to be displayed (if you want to define this variable you must define the `[SITE_ID]`).
 
 ## Environment variables
 
@@ -39,8 +48,10 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 
 ### Example of project structure
 
-```bash
-./test/test-app
+#### Deploy as a Function
+
+```shell
+./test/test-app-function
 ├── .eslintrc
 ├── package.json
 ├── package-lock.json
@@ -48,6 +59,22 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 ├── src
 │   └── server.ts
 └── tsconfig.json
+```
+
+#### Deploy Next.js project
+
+```shell
+./test/test-app-ssr
+├── package.json
+├── package-lock.json
+├── public
+│   └── assets
+│       └── success.jpg
+└── src
+    └── pages
+        ├── index.js
+        └── register
+            └── index.js
 ```
 
 ### Example RUNTIME_OPTIONS (Default options)
@@ -75,6 +102,8 @@ This Action for [firebae](https://firebase.google.com/) transform `Typescript No
 
 ### Example of the .yaml file
 
+#### Deploy as a Function
+
 To authenticate with Firebase and deploy the project to Firebase as a function:
 
 ```yaml
@@ -92,7 +121,34 @@ jobs:
       - uses: actions/checkout@v2
       - uses: weareangular/node-app-to-firebase-gh-actions@dev
         with:
-          args: --deploy-function "{{ secrets.DEFAULT_APP_NAME }}" "{{ secrets.DEFAULT_APP_FILENAME}}" "{{ secrets.PROJECT_NAME }}";
+          args: --deploy-function "{{ secrets.DEFAULT_APP_NAME }}" "{{ secrets.DEFAULT_APP_FILENAME}}" "{{ secrets.FUNCTION_NAME }}";
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          RUNTIME_OPTIONS: ${{ secrets.RUNTIME_OPTIONS }}
+          FUNCTION_ENV: ${{ secrets.FUNCTION_ENV }}
+```
+
+#### Deploy Next.js project
+
+To authenticate with Firebase and deploy the Next.js project to Firebase:
+
+```yaml
+name: Build and deploy function to Firebase
+on:
+  push:
+    branches:
+      - branch
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: weareangular/node-app-to-firebase-gh-actions@dev
+        with:
+          args: --deploy-ssr "{{ secrets.SITE_ID }}" "{{ secrets.FUNCTION_NAME }}";
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
           PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}

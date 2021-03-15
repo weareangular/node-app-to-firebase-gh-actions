@@ -3,4 +3,5 @@
 
 # include required files with an exception
 !entrypoint.sh
-!test/test-app
+!test/test-app-function/
+!test/test-app-ssr/

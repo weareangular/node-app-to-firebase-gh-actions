@@ -29,10 +29,10 @@ This Action for [firebase](https://firebase.google.com/) allows you to perform t
 ## Inputs
 
 - `--h` - Show help message
-- `--deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [PROJECT_ID]` - deploy Typescript Node.js app on firebase as function.
+- `--deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [FUNCTION_NAME]` - deploy Typescript Node.js app on firebase as function.
   - `[DEFAULT_APP_NAME]` - variable name express, `app` by default.
   - `[DEFAULT_APP_FILENAME]` - name of the file that contains the express variable, `app.ts` by default (If you want to define this variable, you must define the `DEFAULT_APP_NAME` variable).
-  - `[PROJECT_NAME]` - name of the function to be displayed (If you want to define this variable, you must define the `DEFAULT_APP_NAME` and `DEFAULT_APP_FILENAME` variables).
+  - `[FUNCTION_NAME]` - name of the function to be displayed (If you want to define this variable, you must define the `DEFAULT_APP_NAME` and `DEFAULT_APP_FILENAME` variables).
 - `--deploy-ssr [SITE_ID] [FUNCTION_NAME]` - Deploy Nextjs app on firebase.
   - `[SITE_ID]` - is used to construct the Firebase-provisioned default subdomains for the site (if it does not exist, it is created).
   - `[FUNCTION_NAME]` - name of the function to be displayed (if you want to define this variable you must define the `[SITE_ID]`).

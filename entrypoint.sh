@@ -483,15 +483,6 @@ while (( "$#" )); do
             createfirebasessr
             exit 0
         ;;
-        --checkenv)
-            files=$(find $2 -type f | grep '.js$\|.jsx$\|.ts$\|.tsx$')
-            sedfilter='s~process.env~functions.config()~g'
-            for filepath in ${files}; do
-                [[ -n $(cat "${filepath}" | grep process.env) ]] \
-                    && { printf "=====================\n${filepath}\n$(cat "${filepath}" | grep process.env)\n";printf "$(cat "${filepath}" | sed "${sedfilter}" | grep 'functions.config()')"; echo "";}
-            done
-            exit 0
-        ;;
         *)
             help
             exit 0

@@ -95,12 +95,6 @@ setfirebaseproject(){
     return 0
 }
 #===================================
-setenvfirebasefunction(){
-    [[ -n $(echo $FUNCTION_ENV) ]] \
-        && { firebase functions:config:set env="${FUNCTION_ENV}" ; }
-    return 0
-}
-#===================================
 projectlayer(){
     [[ ! -d $dirproject ]] \
         && { createfolder "${dirproject}"; }
@@ -121,6 +115,23 @@ checkbuilddir(){
 deletelistenport(){
     sed -i "${sedfilterport2}" ${dirdefaultexportfile}
     sed -zi "${sedfilterport}" ${dirdefaultexportfile}
+    return 0
+}
+#===================================
+changegetmethodenv(){
+    [[ -z $1 ]] \
+        && { return 0; }
+    files=$(find $1 -type f | grep '.js$\|.jsx$\|.ts$\|.tsx$')
+    for filepath in ${files}; do
+        [[ -n $(cat "${filepath}" | grep "${searchstringfilterenv}") ]] \
+            && { sed -i -- "${sedfilterenv}" ${filepath}; sed -i -- "${sedfilterimportfirebasefunctions}" ${filepath}; }
+    done
+    return 0
+}
+#===================================
+setenvfirebasefunction(){
+    [[ -n $(echo $FUNCTION_ENV) ]] \
+        && { firebase functions:config:unset env; firebase functions:config:set env="${FUNCTION_ENV}"; changegetmethodenv "${1}"; }
     return 0
 }
 #===================================
@@ -174,7 +185,7 @@ fourthlayerfunction(){
 #===================================
 deployfunction(){
     setfirebaseproject
-    setenvfirebasefunction
+    setenvfirebasefunction "${dirsecondlayer}"
     firebase deploy --only functions:$functionname
     return 0
 }
@@ -209,6 +220,12 @@ checkfirebasesite(){
     return 0
 }
 #===================================
+setnextjsenv(){
+    [[ -n $FUNCTION_ENV ]] \
+        && { fileenvcontent=$(echo $FUNCTION_ENV | jq -r "${jqfilterenv}"); createfile "${filenameenv}" "${fileenvcontent}"; }
+    return 0
+}
+#===================================
 firstlayerssr(){
     [[ ! $(echo $PWD) == $dirproject ]] \
         && { cd $dirproject; }
@@ -224,6 +241,7 @@ firstlayerssr(){
     createfile "${filenamefirebasejson}" "${firebasejsoncontent//%2/$functionname}"
     createfile "${filenamefirebaserc}" "${firebaserccontent}"
     createfile "${filenamefirebasefunctionsjs}" "${firebasefunctionsjscontent//%1/$functionname}"
+    setnextjsenv
     rebornpackagessr
     return 0
 }
@@ -241,7 +259,6 @@ secondlayerssr(){
 deployssr(){
     setfirebaseproject
     checkfirebasesite
-    setenvfirebasefunction
     firebase deploy --only functions:"${functionname}",hosting:"${siteid}"
     return 0
 }
@@ -288,6 +305,11 @@ loadstringsfunction(){
     outDirmain="%1/index.js"
     jqfieldpkgjson='.main'
     dirtsconfigjson="%1/tsconfig.json"
+    searchstringfilterenv='process.env'
+    replacestringfilterenv='functions.config().env'
+    sedfilterenv='s~%1~%2~g'
+    importfirebasefunctions="import * as functions from 'firebase-functions';"
+    sedfilterimportfirebasefunctions='1s/^/%1\n/'
 
     #==========thirdlayer===============
     thirdlayerfoldername="app"
@@ -331,6 +353,9 @@ changestringsfunction(){
     dirpackagejson=${dirpackagejson//%1/$dirnodejsproject}
     outDirmain=${outDirmain//%1/$outDir}
     dirtsconfigjson=${dirtsconfigjson//%1/$dirnodejsproject}
+    sedfilterenv=${sedfilterenv//%1/$searchstringfilterenv}
+    sedfilterenv=${sedfilterenv//%2/$replacestringfilterenv}
+    sedfilterimportfirebasefunctions=${sedfilterimportfirebasefunctions//%1/$importfirebasefunctions}
 
     #==========thirdlayer===============
     dirthirdlayer=${dirthirdlayer//%1/$dirsecondlayer}
@@ -372,7 +397,7 @@ const { join } = require('path');
 const functions = require('firebase-functions');
 const { default: next } = require('next');
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = functions.config().env.NODE_ENV !== 'production';
 
 const nextjsDistDir = join('src', require('./src/next.config.js').distDir);
 
@@ -400,6 +425,8 @@ EOF
     dirpackagejson="%1/package.json"
     jqfiltersetmain='.main |= "%1"'
     npmfirebaseprojectdependencies="firebase-functions firebase-admin"
+    filenameenv='.env'
+    jqfilterenv='. | keys[] as $k | "\($k)=\(.[$k])"'
 
     #==========secondlayer===============
     filenamenextconfigjs="next.config.js"
@@ -454,6 +481,15 @@ while (( "$#" )); do
             loadstringsssr
             changestringsssr
             createfirebasessr
+            exit 0
+        ;;
+        --checkenv)
+            files=$(find $2 -type f | grep '.js$\|.jsx$\|.ts$\|.tsx$')
+            sedfilter='s~process.env~functions.config()~g'
+            for filepath in ${files}; do
+                [[ -n $(cat "${filepath}" | grep process.env) ]] \
+                    && { printf "=====================\n${filepath}\n$(cat "${filepath}" | grep process.env)\n";printf "$(cat "${filepath}" | sed "${sedfilter}" | grep 'functions.config()')"; echo "";}
+            done
             exit 0
         ;;
         *)

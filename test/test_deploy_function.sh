@@ -24,7 +24,7 @@ rundockerimage(){
     tput sgr0
     DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
     [[ -n $( docker images | grep wrap-firebase ) ]] \
-        && { docker run -it -v "${DIR}/test-app":"/github/workspace" -e "RUNTIME_OPTIONS=${RUNTIME_OPTIONS}" -e "FUNCTION_ENV=${FUNCTION_ENV}" -e "PROJECT_ID=${PROJECT_ID}" -e "FIREBASE_TOKEN=${TOKEN}" --rm wrap-firebase:1.0 --deploy-function "app" "server.ts" "test-nodejs"; } \
+        && { docker run -it -v "${DIR}/test-app-function":"/github/workspace" -e "RUNTIME_OPTIONS=${RUNTIME_OPTIONS}" -e "FUNCTION_ENV=${FUNCTION_ENV}" -e "PROJECT_ID=${PROJECT_ID}" -e "FIREBASE_TOKEN=${TOKEN}" --rm wrap-firebase:1.0 --deploy-function "app" "server.ts" "test-nodejs"; } \
         || { echo "ERROR! no existe el docker"; exit 1; }
 }
 #===================================

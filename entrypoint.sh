@@ -222,7 +222,9 @@ checkfirebasesite(){
 #===================================
 setnextjsenv(){
     [[ -n $FUNCTION_ENV ]] \
-        && { fileenvcontent=$(echo $FUNCTION_ENV | jq -r "${jqfilterenv}"); createfile "${filenameenv}" "${fileenvcontent}"; }
+        && { fileenvcontent=$(echo $FUNCTION_ENV | jq -r "${jqfilterenv}"); createfile "${filenameenv}" "${fileenvcontent}"; filenextconfigjsvarcontent=${filenextconfigjsvarcontent//%1/$(echo $FUNCTION_ENV |  jq -j "${jqsetnextconfigjsvarcontent}")}; } \
+        || { filenextconfigjsvarcontent=${filenextconfigjsvarcontent//%1/$emptyenv}; }
+    filenextconfigjscontent=${filenextconfigjscontent//%1/$filenextconfigjsvarcontent}
     return 0
 }
 #===================================
@@ -397,7 +399,7 @@ const { join } = require('path');
 const functions = require('firebase-functions');
 const { default: next } = require('next');
 
-const isDev = functions.config().env.NODE_ENV !== 'production';
+const isDev = process.env.NODE_ENV !== 'production';
 
 const nextjsDistDir = join('src', require('./src/next.config.js').distDir);
 
@@ -430,7 +432,10 @@ EOF
 
     #==========secondlayer===============
     filenamenextconfigjs="next.config.js"
-    filenextconfigjscontent='module.exports={distDir:"../.next"};'
+    filenextconfigjscontent='module.exports=%1;'
+    filenextconfigjsvarcontent='{distDir:"../.next",env:{%1}};'
+    emptyenv=''
+    jqsetnextconfigjsvarcontent='. | keys[] as $k | "\($k):\"\(.[$k])\","'
 
 }
 #===================================

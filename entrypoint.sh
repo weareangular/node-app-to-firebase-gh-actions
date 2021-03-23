@@ -9,10 +9,13 @@ help() {
   cat << EOF
 usage: $0 [OPTIONS]
     --h                                                                       Show this message 
-    --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [PROJECT_ID]  deploy Typescript Node.js app on firebase as function
+    --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [FUNCTION_NAME]  deploy Typescript Node.js app on firebase as function
                                                                                 [DEFAULT_APP_NAME] => variable name express, 'app' by default.
                                                                                 [DEFAULT_APP_FILENAME] => name of the file that contains the express variable, 'app.ts' by default (if you want to define this variable you must define the previous ones).
-                                                                                [PROJECT_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).
+                                                                                [FUNCTION_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).
+    --deploy-ssr [SITE_ID] [FUNCTION_NAME]                                          deploy Nextjs app on firebase.
+                                                                                [SITE_ID] => is used to construct the Firebase-provisioned default subdomains for the site.
+                                                                                [FUNCTION_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).
 EOF
 }
 #===================================
@@ -79,51 +82,16 @@ copyfile(){
     return 0
 }
 #===================================
-#======DEPLOYNODEJSTYPESCRIPT=======
-#===================================
-checkbuilddir(){
-    [[ ! $(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}") == "${outDir}" ]] \
-        && { sed -i -- "s~$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")~${outDir}~g" "${dirtsconfigjson}"; }
-    [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \
-        && { sed -i -- "s~$(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}")~${outDirmain}~g" "${dirpackagejson}"; }
-    return 0
-}
-#===================================
-rebornpackage(){
-    package=$(cat "${dirpackagejson}" | jq --arg keys "$packagekeys" "$jqfilter")
-    package=$(echo "${package}" | jq "$jqfilter2")
-    echo $package > package.json
-    return 0
-}
-#===================================
-deletelistenport(){
-    sed -i "${sedfilterport2}" ${dirdefaultexportfile}
-    sed -zi "${sedfilterport}" ${dirdefaultexportfile}
-    return 0
-}
-#===================================
-checkexportapp(){
-    [[ ! $(tail -1 $dirdefaultexportfile ) == $defaultexportstring ]] \
-        && { echo -e $defaultexportstring >> $dirdefaultexportfile; }
-    return 0
-}
-#===================================
-getprojectname(){
-    [[ -z $projectname ]] \
-    && { projectname=$(cat $dirpackagejson | jq -r '.name' | sed -E 's/[^[:alnum:]]+//g'); } \
-    || { projectname=$(echo "${projectname}" | sed -E 's/[^[:alnum:]]+//g'); }
+getfunctionname(){
+    [[ -z $functionname ]] \
+    && { functionname=$(cat $dirpackagejson | jq -r '.name' | sed -E 's/[^[:alnum:]]+//g'); } \
+    || { functionname=$(echo "${functionname}" | sed -E 's/[^[:alnum:]]+//g'); }
     return 0
 }
 #===================================
 setfirebaseproject(){
     [[ ! $(echo $PWD) == $dirproject ]] \
         && { cd $dirproject; firebase use --add "$PROJECT_ID"; }
-    return 0
-}
-#===================================
-setenvfirebasefunction(){
-    [[ -n $(echo $FUNCTION_ENV) ]] \
-        && { firebase functions:config:set env="${FUNCTION_ENV}" ; }
     return 0
 }
 #===================================
@@ -134,7 +102,46 @@ projectlayer(){
     return 0
 }
 #===================================
-firstlayer(){
+#==========DEPLOYFUNCTION===========
+#===================================
+checkbuilddir(){
+    [[ ! $(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}") == "${outDir}" ]] \
+        && { sed -i -- "s~$(cat ${dirtsconfigjson} | jq -r "${jqfieldtsconfigjson}")~${outDir}~g" "${dirtsconfigjson}"; }
+    [[ ! $(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}") == "${outDirmain}" ]] \
+        && { sed -i -- "s~$(cat ${dirpackagejson} | jq -r "${jqfieldpkgjson}")~${outDirmain}~g" "${dirpackagejson}"; }
+    return 0
+}
+#===================================
+deletelistenport(){
+    sed -i "${sedfilterport2}" ${dirdefaultexportfile}
+    sed -zi "${sedfilterport}" ${dirdefaultexportfile}
+    return 0
+}
+#===================================
+changegetmethodenv(){
+    [[ -z $1 ]] \
+        && { return 0; }
+    files=$(find $1 -type f | grep '.js$\|.jsx$\|.ts$\|.tsx$')
+    for filepath in ${files}; do
+        [[ -n $(cat "${filepath}" | grep "${searchstringfilterenv}") ]] \
+            && { sed -i -- "${sedfilterenv}" ${filepath}; sed -i -- "${sedfilterimportfirebasefunctions}" ${filepath}; }
+    done
+    return 0
+}
+#===================================
+setenvfirebasefunction(){
+    [[ -n $(echo $FUNCTION_ENV) ]] \
+        && { firebase functions:config:unset env; firebase functions:config:set env="${FUNCTION_ENV}"; changegetmethodenv "${1}"; }
+    return 0
+}
+#===================================
+checkexportapp(){
+    [[ ! $(tail -1 $dirdefaultexportfile ) == $defaultexportstring ]] \
+        && { echo -e $defaultexportstring >> $dirdefaultexportfile; }
+    return 0
+}
+#===================================
+firstlayerfunction(){
     [[ ! $(echo $PWD) == $dirproject ]] \
         && { cd $dirproject; }
     [[ -d $firstlayerfoldername ]] \
@@ -145,31 +152,30 @@ firstlayer(){
     return 0
 }
 #===================================
-secondlayer(){
+secondlayerfunction(){
     [[ ! $(echo $PWD) == $dirfirstlayer ]] \
         && { cd $dirfirstlayer; }
     createfolder "${secondlayerfoldername}"
     checkbuilddir
-    rebornpackage
-    files=$(ls -al ${dirnodejsproject} | grep '^-' | awk -F: '{ print $2 }' | cut -d ' ' -f2 | sed "${sedfilterfiles}")
+    files=$(ls -p ${dirnodejsproject} | grep -v /)
     for filename in ${files}; do
         copyfile "${dirnodejsproject}/${filename}"
     done
-    npm i && echo ""
+    npm i $npmfirebaseprojectdependencies && echo ""
     return 0
 }
 #===================================
-thirdlayer(){
+thirdlayerfunction(){
     [[ ! $(echo $PWD) == $dirsecondlayer ]] \
         && { cd $dirsecondlayer; }
     createfolder "${thirdlayerfoldername}"
-    getprojectname
-    createfile "${filenameindexts}" "${fileindextscontent//%3/$projectname}"
+    getfunctionname
+    createfile "${filenameindexts}" "${fileindextscontent//%3/$functionname}"
     copyfolderelements "${dirsrcnodejsproject}" "${dirthirdlayer}"
     return 0
 }
 #===================================
-fourthlayer(){
+fourthlayerfunction(){
     [[ ! $(echo $PWD) == $dirthirdlayer ]] \
         && { cd $dirthirdlayer; }
     deletelistenport 
@@ -177,10 +183,10 @@ fourthlayer(){
     return 0
 }
 #===================================
-deploynodejsts(){
+deployfunction(){
     setfirebaseproject
-    setenvfirebasefunction
-    firebase deploy --only functions:$1
+    setenvfirebasefunction "${dirsecondlayer}"
+    firebase deploy --only functions:$functionname
     return 0
 }
 #===================================
@@ -188,21 +194,92 @@ createfirebasefunction(){
     echo "===> projectlayer"
     projectlayer
     echo "===> firstlayer"
-    firstlayer
+    firstlayerfunction
     echo "===> secondlayer"
-    secondlayer
+    secondlayerfunction
     echo "===> thirdlayer"
-    thirdlayer
+    thirdlayerfunction
     echo "===> fourthlayer"
-    fourthlayer
-    echo "===> deploynodejsts"
-    deploynodejsts "${projectname}"
+    fourthlayerfunction
+    echo "===> deploy"
+    deployfunction
+    return 0
+}
+#===================================
+#=============DEPLOYSSR=============
+#===================================
+rebornpackagessr(){
+    package=$(cat "${dirpackagejson}" | jq "$jqfiltersetmain")
+    echo $package > "${dirpackagejson}"
+    npm i $npmfirebaseprojectdependencies
+    return 0
+}
+#===================================
+checkfirebasesite(){
+    [[ -n $(firebase hosting:channel:list --site "${siteid}" | grep Error) ]] && { firebase hosting:sites:create $siteid; }
+    return 0
+}
+#===================================
+setnextjsenv(){
+    [[ -n $FUNCTION_ENV ]] \
+        && { fileenvcontent=$(echo $FUNCTION_ENV | jq -r "${jqfilterenv}"); createfile "${filenameenv}" "${fileenvcontent}"; filenextconfigjsvarcontent=${filenextconfigjsvarcontent//%1/$(echo $FUNCTION_ENV |  jq -j "${jqsetnextconfigjsvarcontent}")}; } \
+        || { filenextconfigjsvarcontent=${filenextconfigjsvarcontent//%1/$emptyenv}; }
+    filenextconfigjscontent=${filenextconfigjscontent//%1/$filenextconfigjsvarcontent}
+    return 0
+}
+#===================================
+firstlayerssr(){
+    [[ ! $(echo $PWD) == $dirproject ]] \
+        && { cd $dirproject; }
+    [[ -d $firstlayerfoldername ]] \
+        && rm -r $firstlayerfoldername
+    createfolder "${foldernamesrc}"
+    createfolder "${foldernamepublic}"
+    files=$(ls -p ${dirnodejsproject} | grep -v /)
+    for filename in ${files}; do
+        copyfile "${dirnodejsproject}/${filename}"
+    done
+    getfunctionname
+    createfile "${filenamefirebasejson}" "${firebasejsoncontent//%2/$functionname}"
+    createfile "${filenamefirebaserc}" "${firebaserccontent}"
+    createfile "${filenamefirebasefunctionsjs}" "${firebasefunctionsjscontent//%1/$functionname}"
+    setnextjsenv
+    rebornpackagessr
+    return 0
+}
+#===================================
+secondlayerssr(){
+    [[ ! $(echo $PWD) == $dirpublicfolder ]] \
+        && { cd $dirpublicfolder; }
+    copyfolderelements "${dirpublicnodejsproject}"
+    [[ ! $(echo $PWD) == $dirsrcfolder ]] \
+        && { cd $dirsrcfolder; }
+    copyfolderelements "${dirsrcnodejsproject}"
+    createfile "${filenamenextconfigjs}" "${filenextconfigjscontent}"
+}
+#===================================
+deployssr(){
+    setfirebaseproject
+    checkfirebasesite
+    firebase deploy --only functions:"${functionname}",hosting:"${siteid}"
+    return 0
+}
+#===================================
+createfirebasessr(){
+    echo "===> projectlayer"
+    projectlayer
+    echo "===> firstlayer"
+    firstlayerssr
+    echo "===> secondlayer"
+    secondlayerssr
+    echo "===> deploy"
+    deployssr
     return 0
 }
 #===================================
 #===========LOADSTRINGS=============
 #===================================
-loadstrings(){
+loadstringsfunction(){
 
     #==========nodejsproject==============
     dirnodejsproject="/github/workspace"
@@ -218,21 +295,23 @@ loadstrings(){
     filenamefirebasejson="firebase.json"
     firebasejsoncontent='{"functions":{"predeploy":["npm --prefix \\"$RESOURCE_DIR\\" run build"],"source":"functions","runtime":"%1"}}'
     filenamefirebaserc=".firebaserc"
-    firebaserccontent='{"projects":{"default":"somos-aurora"}}'
+    firebaserccontent='{"projects":{"default":"%1"}}'
 
     #==========secondlayer===============
     secondlayerfoldername="src"
     dirsecondlayer="%1/%2"
-    packagekeys="name-version-description-main-scripts-repository-keywords-author-license-bugs-homepage-devDependencies-dependencies"
     dirpackagejson="%1/package.json"
-    jqfilter='def walk(f):. as $in | if type == "object" then reduce keys_unsorted[] as $key ( {}; . + { ($key):  ($in[$key]) } ) | f elif type == "array" then map( walk(f) ) | f else f end;walk(if type == "object" then with_entries(select( .key as $key | $keys | contains($key) )) else . end)'
-    jqfilter2='.dependencies |= . + {"firebase-functions": "^3.13.2", "firebase-admin": "^9.5.0"}'
-    sedfilterfiles='/package/d'
+    npmfirebaseprojectdependencies="firebase-functions firebase-admin"
     outDir="./lib"
     jqfieldtsconfigjson='.compilerOptions.outDir'
     outDirmain="%1/index.js"
     jqfieldpkgjson='.main'
     dirtsconfigjson="%1/tsconfig.json"
+    searchstringfilterenv='process.env'
+    replacestringfilterenv='functions.config().env'
+    sedfilterenv='s~%1~%2~g'
+    importfirebasefunctions="import * as functions from 'firebase-functions';"
+    sedfilterimportfirebasefunctions='1s/^/%1\n/'
 
     #==========thirdlayer===============
     thirdlayerfoldername="app"
@@ -258,7 +337,7 @@ EOF
     return 0
 }
 #===================================
-changestrings(){
+changestringsfunction(){
     
     #===========projectlayer===============
     dirproject=${dirproject//%1/$(echo $PWD)}
@@ -268,6 +347,7 @@ changestrings(){
     dirfirstlayer=${dirfirstlayer//%1/$dirproject}
     dirfirstlayer=${dirfirstlayer//%2/$firstlayerfoldername}
     firebasejsoncontent=${firebasejsoncontent//%1/$RUNTIME}
+    firebaserccontent=${firebaserccontent//%1/$PROJECT_ID}
 
     #==========secondlayer===============
     dirsecondlayer=${dirsecondlayer//%1/$dirfirstlayer}
@@ -275,6 +355,9 @@ changestrings(){
     dirpackagejson=${dirpackagejson//%1/$dirnodejsproject}
     outDirmain=${outDirmain//%1/$outDir}
     dirtsconfigjson=${dirtsconfigjson//%1/$dirnodejsproject}
+    sedfilterenv=${sedfilterenv//%1/$searchstringfilterenv}
+    sedfilterenv=${sedfilterenv//%2/$replacestringfilterenv}
+    sedfilterimportfirebasefunctions=${sedfilterimportfirebasefunctions//%1/$importfirebasefunctions}
 
     #==========thirdlayer===============
     dirthirdlayer=${dirthirdlayer//%1/$dirsecondlayer}
@@ -294,6 +377,90 @@ changestrings(){
     return 0
 }
 #===================================
+loadstringsssr(){
+
+    #==========nodejsproject==============
+    dirnodejsproject="/github/workspace"
+    dirsrcnodejsproject="${dirnodejsproject}/src"
+    dirpublicnodejsproject="${dirnodejsproject}/public"
+
+    #===========projectlayer===============
+    projectfoldername="firebase-app"
+    dirproject="%1/%2"
+
+    #===========firstlayer===============
+    foldernamesrc="src"
+    dirsrcfolder="%1/%2"
+    foldernamepublic="public"
+    dirpublicfolder="%1/%2"
+    filenamefirebasefunctionsjs="firebaseFunctions.js"
+    firebasefunctionsjscontent=$(cat << EOF
+const { join } = require('path');
+const functions = require('firebase-functions');
+const { default: next } = require('next');
+
+const isDev = process.env.NODE_ENV !== 'production';
+
+const nextjsDistDir = join('src', require('./src/next.config.js').distDir);
+
+const nextjsServer = next({
+  dev: isDev,
+  conf: {
+    distDir: nextjsDistDir,
+  },
+});
+const nextjsHandle = nextjsServer.getRequestHandler();
+
+exports.%1 = functions
+                        .region('%2')
+                        .runWith({ memory: '%3', timeoutSeconds: %4 })
+                        .https
+                        .onRequest((req, res) => {
+                            return nextjsServer.prepare().then(() => nextjsHandle(req, res))
+                        });
+EOF
+)
+    filenamefirebasejson="firebase.json"
+    firebasejsoncontent='{"hosting":{"site":"%1","public":"public","ignore":["firebase.json","**/.*","**/node_modules/**"],"rewrites":[{"source":"**","function":"%2"}]},"functions":{"source":".","predeploy":["npm --prefix \\"$PROJECT_DIR\\" install","npm --prefix \\"$PROJECT_DIR\\" run build"],"runtime":"%3"}}'
+    filenamefirebaserc=".firebaserc"
+    firebaserccontent='{"projects":{"default":"%1"}}'
+    dirpackagejson="%1/package.json"
+    jqfiltersetmain='.main |= "%1"'
+    npmfirebaseprojectdependencies="firebase-functions firebase-admin"
+    filenameenv='.env'
+    jqfilterenv='. | keys[] as $k | "\($k)=\(.[$k])"'
+
+    #==========secondlayer===============
+    filenamenextconfigjs="next.config.js"
+    filenextconfigjscontent='module.exports=%1;'
+    filenextconfigjsvarcontent='{distDir:"../.next",env:{%1}};'
+    emptyenv=''
+    jqsetnextconfigjsvarcontent='. | keys[] as $k | "\($k):\"\(.[$k])\","'
+
+}
+#===================================
+changestringsssr(){
+
+    #===========projectlayer===============
+    dirproject=${dirproject//%1/$(echo $PWD)}
+    dirproject=${dirproject//%2/$projectfoldername}
+
+    #===========firstlayer===============
+    dirsrcfolder=${dirsrcfolder//%1/$dirproject}
+    dirsrcfolder=${dirsrcfolder//%2/$foldernamesrc}
+    dirpublicfolder=${dirpublicfolder//%1/$dirproject}
+    dirpublicfolder=${dirpublicfolder//%2/$foldernamepublic}
+    firebasefunctionsjscontent=${firebasefunctionsjscontent//%2/$REGION}
+    firebasefunctionsjscontent=${firebasefunctionsjscontent//%3/$MEMORY}
+    firebasefunctionsjscontent=${firebasefunctionsjscontent//%4/$TIMEOUT}
+    firebasejsoncontent=${firebasejsoncontent//%1/$siteid}
+    firebasejsoncontent=${firebasejsoncontent//%3/$RUNTIME}
+    firebaserccontent=${firebaserccontent//%1/$PROJECT_ID}
+    dirpackagejson=${dirpackagejson//%1/$dirproject}
+    jqfiltersetmain=${jqfiltersetmain//%1/$filenamefirebasefunctionsjs}
+
+}
+#===================================
 #==========PARAMSANDARGS============
 #===================================
 while (( "$#" )); do
@@ -305,11 +472,20 @@ while (( "$#" )); do
         --deploy-function)
             [[ -z $2 ]] && { appname="app"; } || { appname=${2}; }
             [[ -z $3 ]] && { appfilename="app.ts"; } || { appfilename=${3}; }
-            [[ -z $4 ]] || { projectname=${4}; }
+            [[ -z $4 ]] || { functionname=${4}; }
             init
-            loadstrings
-            changestrings
+            loadstringsfunction
+            changestringsfunction
             createfirebasefunction
+            exit 0
+        ;;
+        --deploy-ssr)
+            [[ -z $2 ]] && { echo -e "\nYou must provide the siteid"; exit 126; } || { siteid=${2}; }
+            [[ -z $3 ]] && { echo -e "\nYou must provide the name of the function"; exit 126; } || { functionname=${3}; }
+            init
+            loadstringsssr
+            changestringsssr
+            createfirebasessr
             exit 0
         ;;
         *)

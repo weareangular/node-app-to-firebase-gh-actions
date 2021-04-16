@@ -2,10 +2,16 @@
 #
 #===================================
 getAPI(){
-    [[ -n $(grep TOKEN .env | cut -d '=' -f 2-) ]] && { TOKEN=$(grep TOKEN .env | cut -d '=' -f2); } || { echo -e "\nEither TOKEN is required to run test the firebase cli"; exit 162; }
-    [[ -n $(grep PROJECT_ID .env | cut -d '=' -f 2-) ]] && { PROJECT_ID=$(grep PROJECT_ID .env | cut -d '=' -f2); } || { echo -e "\nEither PROJECT_ID is required to run test the firebase cli"; exit 162; }
-    [[ -n $(grep RUNTIME_OPTIONS .env | cut -d '=' -f 2-) ]] && { RUNTIME_OPTIONS=$(grep RUNTIME_OPTIONS .env | cut -d '=' -f2); }
-    [[ -n $(grep FUNCTION_ENV .env | cut -d '=' -f 2-) ]] && { FUNCTION_ENV=$(grep FUNCTION_ENV .env | cut -d '=' -f2); }
+    [[ -n $(grep TOKEN .env | cut -d '=' -f 2-) ]] \
+        && { TOKEN=$(grep TOKEN .env | cut -d '=' -f2); } \
+        || { echo -e "\nEither TOKEN is required to run test the firebase cli"; exit 162; }
+    [[ -n $(grep PROJECT_ID .env | cut -d '=' -f 2-) ]] \
+        && { PROJECT_ID=$(grep PROJECT_ID .env | cut -d '=' -f2); } \
+        || { echo -e "\nEither PROJECT_ID is required to run test the firebase cli"; exit 162; }
+    [[ -n $(grep RUNTIME_OPTIONS .env | cut -d '=' -f 2-) ]] \
+        && { RUNTIME_OPTIONS=$(grep RUNTIME_OPTIONS .env | cut -d '=' -f2); }
+    [[ -n $(grep FUNCTION_ENV .env | cut -d '=' -f 2-) ]] \
+        && { FUNCTION_ENV=$(grep FUNCTION_ENV .env | cut -d '=' -f2); }
     [[ -z $1 ]] \
         && { echo -e "\nEither SITE_ID is required"; exit 126; }
     [[ -z $2 ]] \

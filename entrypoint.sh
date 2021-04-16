@@ -8,14 +8,19 @@ set -e
 help() {
   cat << EOF
 usage: $0 [OPTIONS]
-    --h                                                                       Show this message 
+    --h                                                                          Show this message 
+    
     --deploy-function [DEFAULT_APP_NAME] [DEFAULT_APP_FILENAME] [FUNCTION_NAME]  deploy Typescript Node.js app on firebase as function
-                                                                                [DEFAULT_APP_NAME] => variable name express, 'app' by default.
-                                                                                [DEFAULT_APP_FILENAME] => name of the file that contains the express variable, 'app.ts' by default (if you want to define this variable you must define the previous ones).
-                                                                                [FUNCTION_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).
-    --deploy-ssr [SITE_ID] [FUNCTION_NAME]                                          deploy Nextjs app on firebase.
-                                                                                [SITE_ID] => is used to construct the Firebase-provisioned default subdomains for the site.
-                                                                                [FUNCTION_NAME] => name of the function to be displayed (if you want to define this variable you must define the previous ones).
+            [DEFAULT_APP_NAME]     => variable name express, 'app' by default.
+            [DEFAULT_APP_FILENAME] => name of the file that contains the express variable, 'app.ts' by default (if you want to define this variable you must define the previous ones).
+            [FUNCTION_NAME]        => name of the function to be displayed (if you want to define this variable you must define the previous ones).
+    
+    --deploy-ssr [SITE_ID] [FUNCTION_NAME]                                       deploy Nextjs app on firebase.
+            [SITE_ID]              => is used to construct the Firebase-provisioned default subdomains for the site.
+            [FUNCTION_NAME]        => name of the function to be displayed (if you want to define this variable you must define the previous ones).
+    
+    --deploy-react [SITE_ID]                                                     deploy Nextjs app on firebase.
+            [SITE_ID]              => is used to construct the Firebase-provisioned default subdomains for the site.
 EOF
 }
 #===================================
@@ -277,6 +282,44 @@ createfirebasessr(){
     return 0
 }
 #===================================
+#===========DEPLOYREACT=============
+#===================================
+buildreactproject(){
+    npm i
+    npm run build
+}
+#===================================
+firstlayerreact(){
+    [[ ! $(echo $PWD) == $dirproject ]] \
+        && { cd $dirproject; }
+    [[ -d $firstlayerfoldername ]] \
+        && rm -r $firstlayerfoldername
+    createfile "${filenamefirebasejson}" "${firebasejsoncontent}"
+    createfile "${filenamefirebaserc}" "${firebaserccontent}"
+    copyfolderelements "${dirnodejsproject}"
+    return 0
+}
+#===================================
+deployreact(){
+    [[ ! $(echo $PWD) == $dirproject ]] \
+        && { cd $dirproject; }
+    buildreactproject
+    setfirebaseproject
+    checkfirebasesite
+    firebase deploy --only hosting:"${siteid}"
+    return 0
+}
+#===================================
+createfirebasereact(){
+    echo "===> projectlayer"
+    projectlayer
+    echo "===> firstlayer"
+    firstlayerreact
+    echo "===> deploy"
+    deployreact
+    return 0
+}
+#===================================
 #===========LOADSTRINGS=============
 #===================================
 loadstringsfunction(){
@@ -461,6 +504,35 @@ changestringsssr(){
 
 }
 #===================================
+loadstringsreact(){
+
+    #==========nodejsproject==============
+    dirnodejsproject="/github/workspace"
+
+    #===========projectlayer===============
+    projectfoldername="firebase-app"
+    dirproject="%1/%2"
+
+    #===========firstlayer===============
+    filenamefirebasejson="firebase.json"
+    firebasejsoncontent='{"hosting":{"site":"%1","public":"build","ignore":["firebase.json","*/.","*/node_modules/*"],"rewrites":[{"source":"!{/bower_components,/src}/**","destination":"/index.html"}]}}'
+    filenamefirebaserc=".firebaserc"
+    firebaserccontent='{"projects":{"default":"%1"}}'
+}
+#===================================
+changestringsreact(){
+
+    #===========projectlayer===============
+    dirproject=${dirproject//%1/$(echo $PWD)}
+    dirproject=${dirproject//%2/$projectfoldername}
+
+    #===========firstlayer===============
+    dirfirstlayer=${dirfirstlayer//%1/$dirproject}
+    dirfirstlayer=${dirfirstlayer//%2/$firstlayerfoldername}
+    firebasejsoncontent=${firebasejsoncontent//%1/$siteid}
+    firebaserccontent=${firebaserccontent//%1/$PROJECT_ID}
+}
+#===================================
 #==========PARAMSANDARGS============
 #===================================
 while (( "$#" )); do
@@ -488,7 +560,16 @@ while (( "$#" )); do
             createfirebasessr
             exit 0
         ;;
+        --deploy-react)
+            [[ -z $2 ]] && { echo -e "\nYou must provide the siteid"; exit 126; } || { siteid=${2}; }
+            init
+            loadstringsreact
+            changestringsreact
+            createfirebasereact
+            exit 0
+        ;;
         *)
+            echo $*
             help
             exit 0
         ;;

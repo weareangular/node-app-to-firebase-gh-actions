@@ -1,5 +1,7 @@
-#!bin/bash 
+#!/bin/bash 
 #
+#===================================
+set -e
 #===================================
 getAPI(){
     [[ -n $(grep TOKEN .env | cut -d '=' -f 2-) ]] \
@@ -29,19 +31,19 @@ buildockerdimage(){
 #===================================
 rundockerimage(){
     tput setaf 6
-    echo -e "\nTESTING DOCKER IMAGE WITH '--deploy-function' FLAG"
+    echo -e "\nTESTING DOCKER IMAGE WITH '--deploy-ssr' FLAG"
     tput sgr0
     DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )
     [[ -n $( docker images | grep wrap-firebase ) ]] \
-        && { docker run -it -v "${DIR}/test-app-ssr":"/github/workspace" -e "FUNCTION_ENV=$FUNCTION_ENV" -e "RUNTIME_OPTIONS=$RUNTIME_OPTIONS" -e "PROJECT_ID=$PROJECT_ID" -e "FIREBASE_TOKEN=$FIREBASE_TOKEN" --rm wrap-firebase:1.0 --deploy-ssr "${1}" "${2}"; }
+        && { docker run -it -v "${DIR}/test-app-ssr":"/github/workspace" -e "FUNCTION_ENV=$FUNCTION_ENV" -e "RUNTIME_OPTIONS=$RUNTIME_OPTIONS" -e "PROJECT_ID=$PROJECT_ID" -e "FIREBASE_TOKEN=$FIREBASE_TOKEN" --rm wrap-firebase:1.0 --deploy-ssr "${1}" "${2}"; } \
         || { echo "ERROR! no existe el docker"; exit 1; }
 }
 #===================================
 run(){
-    getAPI
+    getAPI "${1}" "${2}"
     deleteimageifexist
     buildockerdimage
-    rundockerimage
+    rundockerimage "${1}" "${2}"
 }
 #===================================
-run
+run "${1}" "${2}"

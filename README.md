@@ -1,6 +1,6 @@
 # GitHub Actions for Firebase
 
-This Action for [firebase](https://firebase.google.com/) allows you to perform two actions, the first one transforms the projects from `Typescript Node.js` into` Firebase Functions` to be implemented and deployed, the second one deploys `Next.js` applications to `Firebase Functions and Hosting`.
+This Action allows you to deploy three types of projects in [Firebase](https://firebase.google.com/), the first option transforms the `Typecript Node.js` projects into `Firebase Functions` to be deployed, the second option deploys Next.js applications in `Firebase Functions and Hosting` and the third option deploy React applications on `Firebase Hosting`.
 
 <div align="center">
 <img src="https://github.githubassets.com/images/modules/site/features/actions-icon-actions.svg" height="80"></img>
@@ -26,6 +26,10 @@ This Action for [firebase](https://firebase.google.com/) allows you to perform t
 
 - Make sure that the scripts section of your project's **`package.json`** contains the **`build`** command that are necessary to deploy in firebase.
 
+### Deploy React project
+
+- Make sure that the scripts section of your project's **`package.json`** contains the **`build`** command that are necessary to deploy in firebase.
+
 ## Inputs
 
 - `--h` - Show help message
@@ -36,6 +40,8 @@ This Action for [firebase](https://firebase.google.com/) allows you to perform t
 - `--deploy-ssr [SITE_ID] [FUNCTION_NAME]` - Deploy Nextjs app on firebase.
   - `[SITE_ID]` - is used to construct the Firebase-provisioned default subdomains for the site (if it does not exist, it is created).
   - `[FUNCTION_NAME]` - name of the function to be displayed (if you want to define this variable you must define the `[SITE_ID]`).
+- `--deploy-react [SITE_ID]` - Deploy React app on firebase.
+  - `[SITE_ID]` - is used to construct the Firebase-provisioned default subdomains for the site (if it does not exist, it is created).
 
 ## Environment variables
 
@@ -77,6 +83,23 @@ This Action for [firebase](https://firebase.google.com/) allows you to perform t
             └── index.js
 ```
 
+#### Deploy React project
+
+```shell
+./test-app-react
+├── package.json
+├── package-lock.json
+├── public
+│   ├── favicon.ico
+│   ├── index.html
+│   └── manifest.json
+├── src
+│   ├── app.tsx
+│   ├── index.tsx
+│   └── react-app-env.d.ts
+└── tsconfig.json
+```
+
 ### Example RUNTIME_OPTIONS (Default options)
 
 ```json
@@ -92,11 +115,9 @@ This Action for [firebase](https://firebase.google.com/) allows you to perform t
 
 ```json
 {
-  "config": {
-    "host": "domain",
-    "key": "SECRET_KEY",
-    "pass": "SECRET_PASS"
-  }
+  "env1": "SECRET_ENV1",
+  "env2": "SECRET_ENV2",
+  "env3": "SECRET_ENV3"
 }
 ```
 
@@ -119,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: weareangular/node-app-to-firebase-gh-actions@dev
+      - uses: weareangular/node-app-to-firebase-gh-actions@main
         with:
           args: --deploy-function "{{ secrets.DEFAULT_APP_NAME }}" "{{ secrets.DEFAULT_APP_FILENAME}}" "{{ secrets.FUNCTION_NAME }}";
         env:
@@ -134,7 +155,7 @@ jobs:
 To authenticate with Firebase and deploy the Next.js project to Firebase:
 
 ```yaml
-name: Build and deploy function to Firebase
+name: Build and deploy Nextjs app to Firebase
 on:
   push:
     branches:
@@ -146,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: weareangular/node-app-to-firebase-gh-actions@dev
+      - uses: weareangular/node-app-to-firebase-gh-actions@main
         with:
           args: --deploy-ssr "{{ secrets.SITE_ID }}" "{{ secrets.FUNCTION_NAME }}";
         env:
@@ -155,3 +176,30 @@ jobs:
           RUNTIME_OPTIONS: ${{ secrets.RUNTIME_OPTIONS }}
           FUNCTION_ENV: ${{ secrets.FUNCTION_ENV }}
 ```
+
+#### Deploy React project
+
+To authenticate with Firebase and deploy the React project to Firebase:
+
+```yaml
+name: Build and deploy React app to Firebase
+on:
+  push:
+    branches:
+      - branch
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: weareangular/node-app-to-firebase-gh-actions@main
+        with:
+          args: --deploy-react "{{ secrets.SITE_ID }}";
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+```
+
+#

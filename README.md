@@ -115,11 +115,9 @@ This Action allows you to deploy three types of projects in [Firebase](https://f
 
 ```json
 {
-  "config": {
-    "host": "domain",
-    "key": "SECRET_KEY",
-    "pass": "SECRET_PASS"
-  }
+  "env1": "SECRET_ENV1",
+  "env2": "SECRET_ENV2",
+  "env3": "SECRET_ENV3"
 }
 ```
 

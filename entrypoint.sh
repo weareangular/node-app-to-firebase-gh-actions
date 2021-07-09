@@ -128,8 +128,10 @@ changegetmethodenv(){
         && { return 0; }
     files=$(find $1 -type f | grep '.js$\|.jsx$\|.ts$\|.tsx$')
     for filepath in ${files}; do
+        [[ -n $(cat "${filepath}" | grep "${searchstringfirebaseadmin}") ]] \
+            && { linenumber="$( cat "${filepath}" | grep -Fn "${searchstringfirebaseadmin}" | cut -d ":" -f 1)"; sedfilterfirebaseadmin=${sedfilterfirebaseadmin//%1/$linenumber}; sed -i "${searchstringfilterfirebaseadmin}" "${filepath}"; sed -i "${sedfilterfirebaseadmin}" ${filepath}; sed -i -- "${sedfilterimportfirebasefunctions}" ${filepath}; }
         [[ -n $(cat "${filepath}" | grep "${searchstringfilterenv}") ]] \
-            && { sed -i -- "${sedfilterenv}" ${filepath}; sed -i -- "${sedfilterimportfirebasefunctions}" ${filepath}; }
+            && { sed -i -- "${sedfilterenv}" ${filepath}; [[ -n $(cat "${filepath}" | grep "firebase-functions") ]] || sed -i -- "${sedfilterimportfirebasefunctions}" ${filepath};}
     done
     return 0
 }
@@ -351,8 +353,12 @@ loadstringsfunction(){
     jqfieldpkgjson='.main'
     dirtsconfigjson="%1/tsconfig.json"
     searchstringfilterenv='process.env'
+    searchstringfilterfirebaseadmin='/admin.initializeApp({/,/});/d'
+    searchstringfirebaseadmin='admin.initializeApp'
     replacestringfilterenv='functions.config().env'
+    replacestringfilterfirebaseadmin='admin.initializeApp(functions.config().initialize);'
     sedfilterenv='s~%1~%2~g'
+    sedfilterfirebaseadmin='%1i\%2'
     importfirebasefunctions="import * as functions from 'firebase-functions';"
     sedfilterimportfirebasefunctions='1s/^/%1\n/'
 
@@ -400,6 +406,7 @@ changestringsfunction(){
     dirtsconfigjson=${dirtsconfigjson//%1/$dirnodejsproject}
     sedfilterenv=${sedfilterenv//%1/$searchstringfilterenv}
     sedfilterenv=${sedfilterenv//%2/$replacestringfilterenv}
+    sedfilterfirebaseadmin=${sedfilterfirebaseadmin//%2/$replacestringfilterfirebaseadmin}
     sedfilterimportfirebasefunctions=${sedfilterimportfirebasefunctions//%1/$importfirebasefunctions}
 
     #==========thirdlayer===============

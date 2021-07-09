@@ -92,11 +92,9 @@ This Action for [firebase](https://firebase.google.com/) allows you to perform t
 
 ```json
 {
-  "config": {
-    "host": "domain",
-    "key": "SECRET_KEY",
-    "pass": "SECRET_PASS"
-  }
+  "env1": "SECRET_ENV1",
+  "env2": "SECRET_ENV2",
+  "env3": "SECRET_ENV3"
 }
 ```
 
